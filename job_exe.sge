@@ -1,0 +1,30 @@
+#!/bin/bash
+# Standard output and error:
+#SBATCH -o ./examplejob.out
+#SBATCH -e ./examplejob.err
+#SBATCH -D ./
+#SBATCH --nodes=4
+#SBATCH --ntasks-per-node=32
+#SBATCH --cpus-per-task=1
+## Request 500 GB of main Memory per node in Units of MB:
+##SBATCH --mem=512000
+#SBATCH -J SSH
+#SBATCH --mail-type=none
+#SBATCH --partition=express
+#SBATCH --time=00:30:00
+
+module load impi
+module load mkl
+export LD_LIBRARY_PATH="$MKL_HOME/lib/intel64"
+
+list="0.05 0.06 0.07 0.08 0.09 0.092 0.094 0.096 0.098 0.10 0.11 0.12 0.13 0.14 0.15 0.16"
+for AA in $list
+do
+ mkdir $AA
+ mpicxx -O2 -std=c++11  SSH.cpp -DAA_peierls=$AA -o $AA/$AA.out -L$MKL_HOME/lib/intel64 -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lm 	
+ srun -n 64 ./$AA/$AA.out > log
+ mv PARAMETERS.txt RHO0.txt ORDER_t.txt ENERGY_t.txt DRIVING_t.txt bands0.txt log $AA/
+done
+
+
+	
